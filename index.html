@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>圃場フェノタイピング音声野帳 | ハンズフリー調査記録</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      background-color: #f4f7f5;
+      color: #1e293b;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
+      70% { transform: scale(1); box-shadow: 0 0 0 14px rgba(220, 38, 38, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+    .mic-active {
+      animation: pulse-ring 1.6s infinite;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#064e3b" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="bg-emerald-900 text-white shadow-sm sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-lg bg-emerald-700/80 flex items-center justify-center border border-emerald-500/40">
+          <i data-lucide="sprout" class="w-5 h-5 text-emerald-200"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">圃場フェノタイピング音声野帳</h1>
+          <p class="text-xs text-emerald-200/90">ハンズフリー調査記録 &amp; CSVエクスポート</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="toggle-tts-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-800 hover:bg-emerald-700 border border-emerald-600/50 transition cursor-pointer">
+          <i data-lucide="volume-2" class="w-4 h-4 text-emerald-300"></i>
+          <span>音声復唱: <strong id="tts-status-label">ON</strong></span>
+        </button>
+        <button id="download-csv-btn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-amber-400 hover:bg-amber-300 text-emerald-950 shadow-sm transition cursor-pointer">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>CSVダウンロード</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-5 space-y-5">
+    <!-- Toast Banner -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+    <!-- KPI Summary -->
+    <section class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
+        <div class="text-xs text-slate-500 font-medium">記録株数</div>
+        <div id="kpi-count" class="text-2xl font-bold text-slate-800 mt-1 tabular-nums">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
+        <div class="text-xs text-slate-500 font-medium">試験区数</div>
+        <div id="kpi-plots" class="text-2xl font-bold text-emerald-700 mt-1 tabular-nums">0</div>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
+        <div class="text-xs text-slate-500 font-medium">平均 茎長 (cm)</div>
+        <div id="kpi-stem" class="text-2xl font-bold text-slate-800 mt-1 tabular-nums">--</div>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
+        <div class="text-xs text-slate-500 font-medium">平均 葉数 (枚)</div>
+        <div id="kpi-leaf" class="text-2xl font-bold text-slate-800 mt-1 tabular-nums">--</div>
+      </div>
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs col-span-2 sm:col-span-1">
+        <div class="text-xs text-slate-500 font-medium">欠測・異常</div>
+        <div id="kpi-missing" class="text-2xl font-bold text-amber-600 mt-1 tabular-nums">0</div>
+      </div>
+    </section>
+
+    <!-- Top Control Grid: Current Target + Voice Input -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <!-- Left: Target Plot & Plant Selector -->
+      <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-700"></i>
+            現在の調査対象
+          </h2>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">自動保存有効</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label for="plot-input" class="block text-xs font-medium text-slate-600 mb-1">試験区</label>
+            <input id="plot-input" type="text" value="A-1" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <label for="rep-select" class="block text-xs font-medium text-slate-600 mb-1">反復</label>
+            <select id="rep-select" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-sm font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="1">反復 1</option>
+              <option value="2">反復 2</option>
+              <option value="3">反復 3</option>
+              <option value="4">反復 4</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">株番号</label>
+            <div class="flex items-center border border-slate-300 rounded-lg overflow-hidden">
+              <button id="plant-prev-btn" type="button" class="px-2.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm cursor-pointer">-</button>
+              <input id="plant-input" type="number" min="1" value="5" class="w-full text-center py-2 text-sm font-bold text-slate-800 focus:outline-none tabular-nums" />
+              <button id="plant-next-btn" type="button" class="px-2.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm cursor-pointer">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Plant Live Values -->
+        <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold text-slate-600">入力中の個体データ (<span id="current-target-badge" class="text-emerald-700 font-bold">A-1 / 反復1 / 株5</span>)</span>
+            <button id="next-plant-action-btn" type="button" class="text-emerald-700 hover:text-emerald-800 font-semibold inline-flex items-center gap-1 cursor-pointer">
+              <span>次の株へ</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="bg-white rounded-lg p-2 border border-slate-200">
+              <div class="text-[11px] text-slate-500">茎長 (cm)</div>
+              <div id="cur-stem" class="text-base font-bold text-slate-800 tabular-nums mt-0.5">--</div>
+            </div>
+            <div class="bg-white rounded-lg p-2 border border-slate-200">
+              <div class="text-[11px] text-slate-500">葉数 (枚)</div>
+              <div id="cur-leaf" class="text-base font-bold text-slate-800 tabular-nums mt-0.5">--</div>
+            </div>
+            <div class="bg-white rounded-lg p-2 border border-slate-200">
+              <div class="text-[11px] text-slate-500">茎数 (本)</div>
+              <div id="cur-tiller" class="text-base font-bold text-slate-800 tabular-nums mt-0.5">--</div>
+            </div>
+            <div class="bg-white rounded-lg p-2 border border-slate-200">
+              <div class="text-[11px] text-slate-500">SPAD値</div>
+              <div id="cur-spad" class="text-base font-bold text-slate-800 tabular-nums mt-0.5">--</div>
+            </div>
+          </div>
+          <div class="text-xs text-slate-600 flex items-center gap-1.5">
+            <span class="font-medium text-slate-500">備考:</span>
+            <span id="cur-note" class="text-slate-700">なし</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Voice Recognition & Command Simulator -->
+      <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="mic" class="w-4 h-4 text-emerald-700"></i>
+            音声コマンド入力（日本語）
+          </h2>
+          <span id="speech-support-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">認識待機中</span>
+        </div>
+
+        <!-- Big Mic Button & Transcript -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 bg-emerald-50/60 rounded-xl p-4 border border-emerald-200/70">
+          <button id="mic-toggle-btn" type="button" class="w-20 h-20 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white flex flex-col items-center justify-center shadow-md transition shrink-0 cursor-pointer">
+            <i id="mic-icon" data-lucide="mic" class="w-7 h-7"></i>
+            <span id="mic-btn-label" class="text-[11px] font-semibold mt-1">開始</span>
+          </button>
+
+          <div class="flex-1 w-full space-y-2 text-center sm:text-left">
+            <div class="text-xs font-medium text-slate-500">認識テキスト / ステータス</div>
+            <div id="transcript-box" class="min-h-[44px] px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm font-medium text-slate-800 flex items-center">
+              マイクボタンを押して「茎長 45.2」「葉数 9」「次へ」と話してください
+            </div>
+            <div class="text-[11px] text-slate-500">
+              対応ワード: <span class="font-medium text-slate-700">茎長 / 草丈 / 葉数 / 茎数 / SPAD / 試験区 / 株 / 次へ / 欠測 / 倒伏 / 取り消し</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulator / Manual Voice Command Input -->
+        <div class="space-y-2 pt-1 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-600">音声入力テスト（マイクなしでも動作確認可能）</span>
+          </div>
+          <form id="sim-form" class="flex gap-2">
+            <input id="sim-input" type="text" placeholder="例: 茎長 48.5 葉数 10" class="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <button type="submit" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm font-semibold transition cursor-pointer shrink-0">
+              コマンド実行
+            </button>
+          </form>
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <button type="button" data-cmd="茎長 46.8" class="sim-chip px-2.5 py-1 rounded-md bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-900 text-xs font-medium transition cursor-pointer">「茎長 46.8」</button>
+            <button type="button" data-cmd="葉数 9" class="sim-chip px-2.5 py-1 rounded-md bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-900 text-xs font-medium transition cursor-pointer">「葉数 9」</button>
+            <button type="button" data-cmd="茎数 14" class="sim-chip px-2.5 py-1 rounded-md bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-900 text-xs font-medium transition cursor-pointer">「茎数 14」</button>
+            <button type="button" data-cmd="SPAD 38.2" class="sim-chip px-2.5 py-1 rounded-md bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-900 text-xs font-medium transition cursor-pointer">「SPAD 38.2」</button>
+            <button type="button" data-cmd="欠測 倒伏あり" class="sim-chip px-2.5 py-1 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-medium transition cursor-pointer">「欠測 倒伏あり」</button>
+            <button type="button" data-cmd="次へ" class="sim-chip px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-medium transition cursor-pointer">「次へ」</button>
+            <button type="button" data-cmd="取り消し" class="sim-chip px-2.5 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium transition cursor-pointer">「取り消し」</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Table Section -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="table" class="w-4 h-4 text-emerald-700"></i>
+            調査記録一覧
+          </h2>
+          <select id="filter-plot-select" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium">
+            <option value="ALL">すべての試験区</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="preview-csv-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+            <span>CSVプレビュー</span>
+          </button>
+          <button id="clear-all-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-200 text-rose-700 hover:bg-rose-50 transition cursor-pointer">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>全件クリア</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
+              <th class="py-2.5 px-4 whitespace-nowrap">試験区</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">反復</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">株No.</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">茎長 (cm)</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">葉数 (枚)</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">茎数 (本)</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">SPAD値</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">状態・備考</th>
+              <th class="py-2.5 px-3 whitespace-nowrap">記録時刻</th>
+              <th class="py-2.5 px-3 text-right whitespace-nowrap">操作</th>
+            </tr>
+          </thead>
+          <tbody id="records-tbody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- In-page Modal for CSV Preview / Clear Confirmation -->
+  <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-xl border border-slate-200 overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="modal-title" class="text-sm font-bold text-slate-800">モーダル</h3>
+        <button id="modal-close-btn" type="button" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="modal-body" class="p-5"></div>
+      <div id="modal-footer" class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'agri_voice_survey_records_v1';
+
+      const SAMPLE_RECORDS = [
+        { id: 'r1', plot: 'A-1', rep: 1, plantNo: 1, stemLength: 42.5, leafCount: 8, tillerCount: 12, spad: 36.4, note: '', updatedAt: '09:12:04' },
+        { id: 'r2', plot: 'A-1', rep: 1, plantNo: 2, stemLength: 44.1, leafCount: 9, tillerCount: 13, spad: 37.8, note: '', updatedAt: '09:13:22' },
+        { id: 'r3', plot: 'A-1', rep: 1, plantNo: 3, stemLength: 39.8, leafCount: 8, tillerCount: 11, spad: 35.1, note: 'やや生育遅れ', updatedAt: '09:14:45' },
+        { id: 'r4', plot: 'A-1', rep: 1, plantNo: 4, stemLength: 45.0, leafCount: 9, tillerCount: 14, spad: 38.5, note: '', updatedAt: '09:16:10' }
+      ];
+
+      let records = loadRecords();
+      let historyStack = [];
+      let ttsEnabled = true;
+      let isListening = false;
+      let recognition = null;
+
+      // DOM Elements
+      const plotInput = document.getElementById('plot-input');
+      const repSelect = document.getElementById('rep-select');
+      const plantInput = document.getElementById('plant-input');
+      const plantPrevBtn = document.getElementById('plant-prev-btn');
+      const plantNextBtn = document.getElementById('plant-next-btn');
+      const nextPlantActionBtn = document.getElementById('next-plant-action-btn');
+      const micToggleBtn = document.getElementById('mic-toggle-btn');
+      const micBtnLabel = document.getElementById('mic-btn-label');
+      const transcriptBox = document.getElementById('transcript-box');
+      const speechSupportBadge = document.getElementById('speech-support-badge');
+      const toggleTtsBtn = document.getElementById('toggle-tts-btn');
+      const ttsStatusLabel = document.getElementById('tts-status-label');
+      const simForm = document.getElementById('sim-form');
+      const simInput = document.getElementById('sim-input');
+      const recordsTbody = document.getElementById('records-tbody');
+      const filterPlotSelect = document.getElementById('filter-plot-select');
+      const downloadCsvBtn = document.getElementById('download-csv-btn');
+      const previewCsvBtn = document.getElementById('preview-csv-btn');
+      const clearAllBtn = document.getElementById('clear-all-btn');
+      const modalBackdrop = document.getElementById('modal-backdrop');
+      const modalTitle = document.getElementById('modal-title');
+      const modalBody = document.getElementById('modal-body');
+      const modalFooter = document.getElementById('modal-footer');
+      const modalCloseBtn = document.getElementById('modal-close-btn');
+
+      function loadRecords() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) return parsed;
+          }
+        } catch (e) {}
+        return JSON.parse(JSON.stringify(SAMPLE_RECORDS));
+      }
+
+      function saveRecords() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        } catch (e) {}
+      }
+
+      function nowTimeStr() {
+        const d = new Date();
+        return d.toTimeString().slice(0, 8);
+      }
+
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const colors = {
+          info: 'bg-slate-800 text-white border-slate-700',
+          success: 'bg-emerald-800 text-white border-emerald-700',
+          warn: 'bg-amber-600 text-white border-amber-500',
+          error: 'bg-rose-700 text-white border-rose-600'
+        };
+        const el = document.createElement('div');
+        el.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-lg text-xs sm:text-sm font-medium transition-opacity duration-300 ${colors[type] || colors.info}`;
+        el.textContent = message;
+        container.appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = '0';
+          setTimeout(() => el.remove(), 300);
+        }, 3000);
+      }
+
+      function speak(text) {
+        if (!ttsEnabled) return;
+        try {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'ja-JP';
+            utter.rate = 1.15;
+            window.speechSynthesis.speak(utter);
+          }
+        } catch (e) {}
+      }
+
+      function getCurrentTarget() {
+        return {
+          plot: (plotInput.value || 'A-1').trim().toUpperCase(),
+          rep: parseInt(repSelect.value, 10) || 1,
+          plantNo: Math.max(1, parseInt(plantInput.value, 10) || 1)
+        };
+      }
+
+      function findOrCreateRecord(plot, rep, plantNo) {
+        let rec = records.find(r => r.plot === plot && r.rep === rep && r.plantNo === plantNo);
+        if (!rec) {
+          rec = {
+            id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            plot,
+            rep,
+            plantNo,
+            stemLength: null,
+            leafCount: null,
+            tillerCount: null,
+            spad: null,
+            note: '',
+            updatedAt: nowTimeStr()
+          };
+          records.push(rec);
+        }
+        return rec;
+      }
+
+      function pushUndoSnapshot() {
+        historyStack.push(JSON.stringify(records));
+        if (historyStack.length > 30) historyStack.shift();
+      }
+
+      // Parse Japanese agricultural voice commands
+      function handleVoiceCommand(rawText) {
+        const text = rawText.replace(/[。、！!？?]/g, ' ').trim();
+        if (!text) return;
+        transcriptBox.textContent = `「${text}」`;
+
+        if (/取り消し|とりけし|キャンセル|元に戻す/.test(text)) {
+          if (historyStack.length > 0) {
+            records = JSON.parse(historyStack.pop());
+            saveRecords();
+            renderAll();
+            showToast('直前の記録を取り消しました', 'info');
+            speak('直前の記録を取り消しました');
+          } else {
+            showToast('取り消せる履歴がありません', 'warn');
+            speak('取り消せる履歴がありません');
+          }
+          return;
+        }
+
+        // Plot change
+        const plotMatch = text.match(/(?:試験区|プロット|区)\s*([A-Za-z0-9\-ー]+)/i);
+        if (plotMatch) {
+          const newPlot = plotMatch[1].replace(/ー/g, '-').toUpperCase();
+          plotInput.value = newPlot;
+          showToast(`試験区を ${newPlot} に変更しました`, 'info');
+          speak(`試験区 ${newPlot}`);
+        }
+
+        // Rep change
+        const repMatch = text.match(/(?:反復|はんぷく)\s*(\d+)/);
+        if (repMatch) {
+          const r = Math.min(4, Math.max(1, parseInt(repMatch[1], 10)));
+          repSelect.value = String(r);
+          showToast(`反復を ${r} に変更しました`, 'info');
+        }
+
+        // Plant number jump
+        const plantMatch = text.match(/(?:株|個体)\s*(\d+)/);
+        if (plantMatch) {
+          plantInput.value = String(Math.max(1, parseInt(plantMatch[1], 10)));
+          renderCurrentTargetPanel();
+          speak(`株 ${plantInput.value}`);
+        }
+
+        const target = getCurrentTarget();
+        let mutated = false;
+        let spokenParts = [];
+        let outOfRange = false;
+
+        // Extract metrics
+        const normalized = text
+          .replace(/スパッド|ＳＰＡＤ/gi, 'SPAD')
+          .replace(/けいちょう|草丈|くさたけ/g, '茎長')
+          .replace(/ようすう|葉の数/g, '葉数')
+          .replace(/けいすう|茎の数|分げつ/g, '茎数');
+
+        const stemMatch = normalized.match(/茎長\s*(\d+(?:\.\d+)?)/);
+        const leafMatch = normalized.match(/葉数\s*(\d+(?:\.\d+)?)/);
+        const tillerMatch = normalized.match(/茎数\s*(\d+(?:\.\d+)?)/);
+        const spadMatch = normalized.match(/SPAD\s*(\d+(?:\.\d+)?)/i);
+        const missingMatch = /(欠測|けっそく|枯死|倒伏|病害|虫害)/.test(normalized);
+
+        if (stemMatch || leafMatch || tillerMatch || spadMatch || missingMatch) {
+          pushUndoSnapshot();
+          const rec = findOrCreateRecord(target.plot, target.rep, target.plantNo);
+
+          if (stemMatch) {
+            const val = parseFloat(stemMatch[1]);
+            rec.stemLength = val;
+            mutated = true;
+            spokenParts.push(`茎長 ${val}`);
+            if (val < 5 || val > 250) outOfRange = true;
+          }
+          if (leafMatch) {
+            const val = parseFloat(leafMatch[1]);
+            rec.leafCount = val;
+            mutated = true;
+            spokenParts.push(`葉数 ${val}`);
+            if (val < 1 || val > 50) outOfRange = true;
+          }
+          if (tillerMatch) {
+            const val = parseFloat(tillerMatch[1]);
+            rec.tillerCount = val;
+            mutated = true;
+            spokenParts.push(`茎数 ${val}`);
+            if (val < 1 || val > 80) outOfRange = true;
+          }
+          if (spadMatch) {
+            const val = parseFloat(spadMatch[1]);
+            rec.spad = val;
+            mutated = true;
+            spokenParts.push(`SPAD ${val}`);
+            if (val < 5 || val > 80) outOfRange = true;
+          }
+          if (missingMatch) {
+            const notes = [];
+            if (/欠測|けっそく/.test(normalized)) notes.push('欠測');
+            if (/倒伏/.test(normalized)) notes.push('倒伏あり');
+            if (/枯死/.test(normalized)) notes.push('枯死');
+            if (/病害/.test(normalized)) notes.push('病害あり');
+            if (/虫害/.test(normalized)) notes.push('虫害あり');
+            const newNote = notes.join('・');
+            rec.note = rec.note ? `${rec.note} / ${newNote}` : newNote;
+            mutated = true;
+            spokenParts.push(newNote);
+          }
+
+          rec.updatedAt = nowTimeStr();
+        }
+
+        // Next plant command
+        const goNext = /(?:次へ|つぎへ|次の株|^次$|^つぎ$)/.test(text);
+        if (goNext) {
+          plantInput.value = String(target.plantNo + 1);
+          spokenParts.push(`株 ${plantInput.value} へ`);
+        }
+
+        if (mutated) {
+          saveRecords();
+          renderAll();
+          if (outOfRange) {
+            showToast(`範囲外の値を記録しました: ${spokenParts.join('、')}`, 'warn');
+            speak(`${spokenParts.join('、')}。値が範囲外です。確認してください`);
+          } else {
+            showToast(`記録しました: ${spokenParts.join('、')}`, 'success');
+            speak(`${spokenParts.join('、')}、記録しました`);
+          }
+        } else if (goNext) {
+          renderCurrentTargetPanel();
+          showToast(`株 ${plantInput.value} へ移動しました`, 'info');
+          speak(`株 ${plantInput.value}`);
+        } else if (!plotMatch && !repMatch && !plantMatch) {
+          showToast('コマンドを認識できませんでした（「茎長 45.2」のように入力）', 'warn');
+        }
+      }
+
+      // Speech Recognition Setup
+      function initSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          speechSupportBadge.textContent = '音声API非対応（下部テスト欄をご利用ください）';
+          speechSupportBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium';
+          return;
+        }
+        speechSupportBadge.textContent = '音声認識利用可能 (ja-JP)';
+        speechSupportBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium';
+
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ja-JP';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        recognition.onstart = () => {
+          isListening = true;
+          micToggleBtn.classList.add('bg-rose-600', 'hover:bg-rose-500', 'mic-active');
+          micToggleBtn.classList.remove('bg-emerald-700', 'hover:bg-emerald-600');
+          micBtnLabel.textContent = '停止';
+          speechSupportBadge.textContent = '聞き取り中...';
+          speechSupportBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-semibold';
+        };
+
+        recognition.onresult = (event) => {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const res = event.results[i];
+            if (res.isFinal) {
+              handleVoiceCommand(res[0].transcript);
+            } else {
+              interim += res[0].transcript;
+            }
+          }
+          if (interim) {
+            transcriptBox.textContent = `認識中: ${interim}...`;
+          }
+        };
+
+        recognition.onerror = (event) => {
+          isListening = false;
+          resetMicButton();
+          if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            showToast('マイク許可がありません。下部の音声テスト入力をご利用ください', 'warn');
+          } else {
+            showToast(`音声認識エラー (${event.error})`, 'error');
+          }
+        };
+
+        recognition.onend = () => {
+          isListening = false;
+          resetMicButton();
+        };
+      }
+
+      function resetMicButton() {
+        micToggleBtn.classList.remove('bg-rose-600', 'hover:bg-rose-500', 'mic-active');
+        micToggleBtn.classList.add('bg-emerald-700', 'hover:bg-emerald-600');
+        micBtnLabel.textContent = '開始';
+        if (recognition) {
+          speechSupportBadge.textContent = '待機中';
+          speechSupportBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium';
+        }
+      }
+
+      micToggleBtn.addEventListener('click', () => {
+        if (!recognition) {
+          showToast('このブラウザ環境ではマイク音声認識が利用できません。テスト入力をお使いください', 'warn');
+          return;
+        }
+        if (isListening) {
+          recognition.stop();
+        } else {
+          try {
+            recognition.start();
+          } catch (e) {
+            showToast('音声認識の開始に失敗しました', 'error');
+          }
+        }
+      });
+
+      // Render KPIs
+      function renderKPIs() {
+        document.getElementById('kpi-count').textContent = String(records.length);
+        const plots = new Set(records.map(r => r.plot));
+        document.getElementById('kpi-plots').textContent = String(plots.size);
+
+        const stems = records.map(r => r.stemLength).filter(v => typeof v === 'number' && !isNaN(v));
+        const leaves = records.map(r => r.leafCount).filter(v => typeof v === 'number' && !isNaN(v));
+        const missingCount = records.filter(r => r.note && r.note.includes('欠測')).length;
+
+        document.getElementById('kpi-stem').textContent = stems.length > 0
+          ? (stems.reduce((a, b) => a + b, 0) / stems.length).toFixed(1)
+          : '--';
+        document.getElementById('kpi-leaf').textContent = leaves.length > 0
+          ? (leaves.reduce((a, b) => a + b, 0) / leaves.length).toFixed(1)
+          : '--';
+        document.getElementById('kpi-missing').textContent = String(missingCount);
+      }
+
+      // Render Current Target Panel
+      function renderCurrentTargetPanel() {
+        const target = getCurrentTarget();
+        document.getElementById('current-target-badge').textContent = `${target.plot} / 反復${target.rep} / 株${target.plantNo}`;
+        const rec = records.find(r => r.plot === target.plot && r.rep === target.rep && r.plantNo === target.plantNo);
+        document.getElementById('cur-stem').textContent = rec && rec.stemLength !== null ? rec.stemLength : '--';
+        document.getElementById('cur-leaf').textContent = rec && rec.leafCount !== null ? rec.leafCount : '--';
+        document.getElementById('cur-tiller').textContent = rec && rec.tillerCount !== null ? rec.tillerCount : '--';
+        document.getElementById('cur-spad').textContent = rec && rec.spad !== null ? rec.spad : '--';
+        document.getElementById('cur-note').textContent = rec && rec.note ? rec.note : 'なし';
+      }
+
+      // Render Plot Filter Dropdown
+      function renderPlotFilter() {
+        const current = filterPlotSelect.value;
+        const plots = Array.from(new Set(records.map(r => r.plot))).sort();
+        filterPlotSelect.innerHTML = '<option value="ALL">すべての試験区</option>';
+        plots.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = `試験区 ${p}`;
+          filterPlotSelect.appendChild(opt);
+        });
+        if (plots.includes(current)) filterPlotSelect.value = current;
+      }
+
+      // Render Table
+      function renderTable() {
+        const filterVal = filterPlotSelect.value;
+        const filtered = filterVal === 'ALL' ? records : records.filter(r => r.plot === filterVal);
+        const sorted = [...filtered].sort((a, b) => {
+          if (a.plot !== b.plot) return a.plot.localeCompare(b.plot);
+          if (a.rep !== b.rep) return a.rep - b.rep;
+          return a.plantNo - b.plantNo;
+        });
+
+        if (sorted.length === 0) {
+          recordsTbody.innerHTML = `
+            <tr>
+              <td colspan="10" class="py-8 text-center text-slate-400 text-sm">
+                記録データがありません。音声入力または下のテストコマンドで記録を追加してください。
+              </td>
+            </tr>`;
+          return;
+        }
+
+        const target = getCurrentTarget();
+        recordsTbody.innerHTML = sorted.map(r => {
+          const isActive = r.plot === target.plot && r.rep === target.rep && r.plantNo === target.plantNo;
+          const isMissing = r.note && r.note.includes('欠測');
+          const rowClass = isActive ? 'bg-emerald-50/70' : (isMissing ? 'bg-amber-50/40' : 'hover:bg-slate-50');
+          return `
+            <tr class="${rowClass}" data-id="${r.id}">
+              <td class="py-2.5 px-4 font-semibold text-slate-800">${escapeHtml(r.plot)}</td>
+              <td class="py-2.5 px-3 tabular-nums text-slate-700">${r.rep}</td>
+              <td class="py-2.5 px-3 tabular-nums font-semibold text-slate-800">${r.plantNo}</td>
+              <td class="py-2.5 px-3 tabular-nums">
+                <input type="number" step="0.1" data-field="stemLength" value="${r.stemLength ?? ''}" placeholder="--" class="cell-input w-20 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
+              </td>
+              <td class="py-2.5 px-3 tabular-nums">
+                <input type="number" step="1" data-field="leafCount" value="${r.leafCount ?? ''}" placeholder="--" class="cell-input w-16 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
+              </td>
+              <td class="py-2.5 px-3 tabular-nums">
+                <input type="number" step="1" data-field="tillerCount" value="${r.tillerCount ?? ''}" placeholder="--" class="cell-input w-16 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
+              </td>
+              <td class="py-2.5 px-3 tabular-nums">
+                <input type="number" step="0.1" data-field="spad" value="${r.spad ?? ''}" placeholder="--" class="cell-input w-20 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
+              </td>
+              <td class="py-2.5 px-3">
+                <input type="text" data-field="note" value="${escapeHtml(r.note || '')}" placeholder="なし" class="cell-input w-32 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-xs text-slate-700" />
+              </td>
+              <td class="py-2.5 px-3 text-xs text-slate-400 tabular-nums whitespace-nowrap">${escapeHtml(r.updatedAt)}</td>
+              <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                <button type="button" class="select-row-btn text-xs text-emerald-700 hover:underline mr-2 cursor-pointer">選択</button>
+                <button type="button" class="delete-row-btn text-xs text-rose-600 hover:underline cursor-pointer">削除</button>
+              </td>
+            </tr>`;
+        }).join('');
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function renderAll() {
+        renderKPIs();
+        renderCurrentTargetPanel();
+        renderPlotFilter();
+        renderTable();
+      }
+
+      // Table Event Delegation
+      recordsTbody.addEventListener('change', (e) => {
+        if (!e.target.classList.contains('cell-input')) return;
+        const tr = e.target.closest('tr');
+        const id = tr.dataset.id;
+        const field = e.target.dataset.field;
+        const rec = records.find(r => r.id === id);
+        if (!rec) return;
+
+        pushUndoSnapshot();
+        if (field === 'note') {
+          rec.note = e.target.value.trim();
+        } else {
+          const val = e.target.value === '' ? null : parseFloat(e.target.value);
+          rec[field] = isNaN(val) ? null : val;
+        }
+        rec.updatedAt = nowTimeStr();
+        saveRecords();
+        renderKPIs();
+        renderCurrentTargetPanel();
+      });
+
+      recordsTbody.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr');
+        if (!tr) return;
+        const id = tr.dataset.id;
+        const rec = records.find(r => r.id === id);
+        if (!rec) return;
+
+        if (e.target.classList.contains('select-row-btn')) {
+          plotInput.value = rec.plot;
+          repSelect.value = String(rec.rep);
+          plantInput.value = String(rec.plantNo);
+          renderAll();
+          showToast(`${rec.plot} 反復${rec.rep} 株${rec.plantNo} を選択しました`, 'info');
+        } else if (e.target.classList.contains('delete-row-btn')) {
+          pushUndoSnapshot();
+          records = records.filter(r => r.id !== id);
+          saveRecords();
+          renderAll();
+          showToast('1件の記録を削除しました', 'info');
+        }
+      });
+
+      // CSV Generation
+      function generateCsvContent() {
+        const headers = ['試験区', '反復', '株番号', '茎長_cm', '葉数_枚', '茎数_本', 'SPAD値', '状態_備考', '記録時刻'];
+        const sorted = [...records].sort((a, b) => {
+          if (a.plot !== b.plot) return a.plot.localeCompare(b.plot);
+          if (a.rep !== b.rep) return a.rep - b.rep;
+          return a.plantNo - b.plantNo;
+        });
+        const rows = sorted.map(r => [
+          r.plot,
+          r.rep,
+          r.plantNo,
+          r.stemLength ?? '',
+          r.leafCount ?? '',
+          r.tillerCount ?? '',
+          r.spad ?? '',
+          `"${String(r.note || '').replace(/"/g, '""')}"`,
+          r.updatedAt
+        ].join(','));
+        return [headers.join(','), ...rows].join('\r\n');
+      }
+
+      downloadCsvBtn.addEventListener('click', () => {
+        if (records.length === 0) {
+          showToast('出力する記録データがありません', 'warn');
+          return;
+        }
+        const csv = '\uFEFF' + generateCsvContent();
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `field_survey_${dateStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('CSVファイルをダウンロードしました', 'success');
+      });
+
+      // Modal Helpers
+      function openModal(title, bodyHtml, footerHtml) {
+        modalTitle.textContent = title;
+        modalBody.innerHTML = bodyHtml;
+        modalFooter.innerHTML = footerHtml;
+        modalBackdrop.classList.remove('hidden');
+        modalBackdrop.classList.add('flex');
+      }
+
+      function closeModal() {
+        modalBackdrop.classList.add('hidden');
+        modalBackdrop.classList.remove('flex');
+      }
+
+      modalCloseBtn.addEventListener('click', closeModal);
+      modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeModal();
+      });
+
+      previewCsvBtn.addEventListener('click', () => {
+        const csv = generateCsvContent();
+        openModal(
+          'CSVデータプレビュー',
+          `<pre id="csv-preview-pre" class="bg-slate-900 text-emerald-200 p-4 rounded-xl text-xs overflow-x-auto max-h-72 leading-relaxed">${escapeHtml(csv)}</pre>`,
+          `<button id="copy-csv-btn" type="button" class="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold cursor-pointer">クリップボードにコピー</button>
+           <button id="close-csv-modal-btn" type="button" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold cursor-pointer">閉じる</button>`
+        );
+        document.getElementById('close-csv-modal-btn').addEventListener('click', closeModal);
+        document.getElementById('copy-csv-btn').addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(csv);
+            showToast('CSVをコピーしました', 'success');
+          } catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = csv;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('CSVをコピーしました', 'success');
+          }
+        });
+      });
+
+      clearAllBtn.addEventListener('click', () => {
+        openModal(
+          '全件クリアの確認',
+          '<p class="text-sm text-slate-600">現在記録されているすべての調査データを削除します。よろしいですか？</p>',
+          `<button id="cancel-clear-btn" type="button" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold cursor-pointer">キャンセル</button>
+           <button id="confirm-clear-btn" type="button" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">すべて削除する</button>`
+        );
+        document.getElementById('cancel-clear-btn').addEventListener('click', closeModal);
+        document.getElementById('confirm-clear-btn').addEventListener('click', () => {
+          pushUndoSnapshot();
+          records = [];
+          saveRecords();
+          renderAll();
+          closeModal();
+          showToast('すべてのデータをクリアしました', 'info');
+        });
+      });
+
+      // Other Controls
+      toggleTtsBtn.addEventListener('click', () => {
+        ttsEnabled = !ttsEnabled;
+        ttsStatusLabel.textContent = ttsEnabled ? 'ON' : 'OFF';
+        showToast(`音声復唱を ${ttsEnabled ? 'ON' : 'OFF'} にしました`, 'info');
+      });
+
+      plantPrevBtn.addEventListener('click', () => {
+        plantInput.value = String(Math.max(1, (parseInt(plantInput.value, 10) || 1) - 1));
+        renderAll();
+      });
+
+      plantNextBtn.addEventListener('click', () => {
+        plantInput.value = String((parseInt(plantInput.value, 10) || 1) + 1);
+        renderAll();
+      });
+
+      nextPlantActionBtn.addEventListener('click', () => {
+        handleVoiceCommand('次へ');
+      });
+
+      plotInput.addEventListener('change', renderAll);
+      repSelect.addEventListener('change', renderAll);
+      plantInput.addEventListener('change', renderAll);
+      filterPlotSelect.addEventListener('change', renderTable);
+
+      simForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const val = simInput.value.trim();
+        if (!val) return;
+        handleVoiceCommand(val);
+        simInput.value = '';
+      });
+
+      document.querySelectorAll('.sim-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          handleVoiceCommand(btn.dataset.cmd);
+        });
+      });
+
+      // Init
+      initSpeechRecognition();
+      renderAll();
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    })();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('SW registered:', reg.scope))
+          .catch((err) => console.error('SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
