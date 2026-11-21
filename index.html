@@ -449,20 +449,29 @@
         let spokenParts = [];
         let outOfRange = false;
 
-        // Extract metrics
-        const normalized = text
-          .replace(/スパッド|ＳＰＡＤ/gi, 'SPAD')
-          .replace(/けいちょう|草丈|くさたけ/g, '茎長')
-          .replace(/ようすう|葉の数/g, '葉数')
-          .replace(/けいすう|茎の数|分げつ/g, '茎数');
+        // Normalize full-width numbers, Japanese decimal "点", and common speech misrecognitions
+        const toHalfWidth = (s) => s
+          .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+          .replace(/．/g, '.')
+          .replace(/(\d+)\s*点\s*(\d+)/g, '$1.$2');
+
+        const normalized = toHalfWidth(text)
+          .replace(/スパッド|スパット|スパッツ|スパ|エスピーエーディー|ＳＰＡＤ/gi, 'SPAD')
+          .replace(/久喜町|慶長|傾聴|警庁|県庁|計長|軽重|成長|身長|会長|けいちょう|くさたけ|草丈|長さ|高さ/g, '茎長')
+          .replace(/様子|要数|用水|洋数|ようすう|はすう|葉の数|枚数/g, '葉数')
+          .replace(/係数|軽数|件数|けいすう|茎の数|本数|分げつ|ぶんげつ/g, '茎数')
+          .replace(/結束|欠席|結足|けっそく/g, '欠測');
 
         const stemMatch = normalized.match(/茎長\s*(\d+(?:\.\d+)?)/);
         const leafMatch = normalized.match(/葉数\s*(\d+(?:\.\d+)?)/);
         const tillerMatch = normalized.match(/茎数\s*(\d+(?:\.\d+)?)/);
         const spadMatch = normalized.match(/SPAD\s*(\d+(?:\.\d+)?)/i);
-        const missingMatch = /(欠測|けっそく|枯死|倒伏|病害|虫害)/.test(normalized);
+        const missingMatch = /(欠測|枯死|倒伏|病害|虫害)/.test(normalized);
+        const bareNumberMatch = (!stemMatch && !leafMatch && !tillerMatch && !spadMatch && !plotMatch && !repMatch && !plantMatch)
+          ? normalized.match(/^\s*(\d+(?:\.\d+)?)\s*(?:センチ|cm|枚|本)?\s*$/i)
+          : null;
 
-        if (stemMatch || leafMatch || tillerMatch || spadMatch || missingMatch) {
+        if (stemMatch || leafMatch || tillerMatch || spadMatch || missingMatch || bareNumberMatch) {
           pushUndoSnapshot();
           const rec = findOrCreateRecord(target.plot, target.rep, target.plantNo);
 
@@ -494,9 +503,36 @@
             spokenParts.push(`SPAD ${val}`);
             if (val < 5 || val > 80) outOfRange = true;
           }
+          if (bareNumberMatch) {
+            const val = parseFloat(bareNumberMatch[1]);
+            if (rec.stemLength === null) {
+              rec.stemLength = val;
+              mutated = true;
+              spokenParts.push(`茎長 ${val}`);
+              if (val < 5 || val > 250) outOfRange = true;
+            } else if (rec.leafCount === null) {
+              rec.leafCount = val;
+              mutated = true;
+              spokenParts.push(`葉数 ${val}`);
+              if (val < 1 || val > 50) outOfRange = true;
+            } else if (rec.tillerCount === null) {
+              rec.tillerCount = val;
+              mutated = true;
+              spokenParts.push(`茎数 ${val}`);
+              if (val < 1 || val > 80) outOfRange = true;
+            } else if (rec.spad === null) {
+              rec.spad = val;
+              mutated = true;
+              spokenParts.push(`SPAD ${val}`);
+              if (val < 5 || val > 80) outOfRange = true;
+            } else {
+              showToast('この株の4項目は入力済みです。「次へ」で次の株へ進めます', 'warn');
+              speak('入力済みです。次へ進んでください');
+            }
+          }
           if (missingMatch) {
             const notes = [];
-            if (/欠測|けっそく/.test(normalized)) notes.push('欠測');
+            if (/欠測/.test(normalized)) notes.push('欠測');
             if (/倒伏/.test(normalized)) notes.push('倒伏あり');
             if (/枯死/.test(normalized)) notes.push('枯死');
             if (/病害/.test(normalized)) notes.push('病害あり');
