@@ -41,7 +41,7 @@
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">圃場フェノタイピング音声野帳</h1>
-          <p class="text-xs text-emerald-200/90">ハンズフリー調査記録 &amp; CSVエクスポート</p>
+          <p class="text-xs text-emerald-200/90">ハンズフリー調査記録 &amp; CSVエクスポート (v2.1)</p>
         </div>
       </div>
 
@@ -167,6 +167,16 @@
           <span id="speech-support-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">認識待機中</span>
         </div>
 
+                <!-- Input Mode Selector -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="text-xs font-semibold text-slate-600 mr-1">数値のみ入力先:</span>
+          <button type="button" data-mode="auto" class="mode-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-700 text-white cursor-pointer">自動順</button>
+          <button type="button" data-mode="stemLength" class="mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">茎長のみ</button>
+          <button type="button" data-mode="leafCount" class="mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">葉数のみ</button>
+          <button type="button" data-mode="tillerCount" class="mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">茎数のみ</button>
+          <button type="button" data-mode="spad" class="mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">SPADのみ</button>
+        </div>
+
         <!-- Big Mic Button & Transcript -->
         <div class="flex flex-col sm:flex-row items-center gap-4 bg-emerald-50/60 rounded-xl p-4 border border-emerald-200/70">
           <button id="mic-toggle-btn" type="button" class="w-20 h-20 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white flex flex-col items-center justify-center shadow-md transition shrink-0 cursor-pointer">
@@ -286,6 +296,7 @@
       let ttsEnabled = true;
       let isListening = false;
       let recognition = null;
+      let inputMode = 'auto';
 
       // DOM Elements
       const plotInput = document.getElementById('plot-input');
@@ -457,9 +468,9 @@
 
         const normalized = toHalfWidth(text)
           .replace(/スパッド|スパット|スパッツ|スパ|エスピーエーディー|ＳＰＡＤ/gi, 'SPAD')
-          .replace(/久喜町|慶長|傾聴|警庁|県庁|計長|軽重|成長|身長|会長|けいちょう|くさたけ|草丈|長さ|高さ/g, '茎長')
-          .replace(/様子|要数|用水|洋数|ようすう|はすう|葉の数|枚数/g, '葉数')
-          .replace(/係数|軽数|件数|けいすう|茎の数|本数|分げつ|ぶんげつ/g, '茎数')
+          .replace(/久喜町|慶長|傾聴|警庁|県庁|計長|軽重|系長|軽長|警調|京町|成長|身長|会長|けいちょう|くさたけ|草丈|長さ|高さ/g, '茎長')
+          .replace(/尿数|陽数|用数|要す|幼数|容数|養数|様子|要数|用水|洋数|ようすう|はすう|葉っぱ|はっぱ|葉の数|枚数/g, '葉数')
+          .replace(/係数|軽数|件数|経数|けいすう|茎の数|本数|分げつ|ぶんげつ/g, '茎数')
           .replace(/結束|欠席|結足|けっそく/g, '欠測');
 
         const stemMatch = normalized.match(/茎長\s*(\d+(?:\.\d+)?)/);
@@ -467,8 +478,9 @@
         const tillerMatch = normalized.match(/茎数\s*(\d+(?:\.\d+)?)/);
         const spadMatch = normalized.match(/SPAD\s*(\d+(?:\.\d+)?)/i);
         const missingMatch = /(欠測|枯死|倒伏|病害|虫害)/.test(normalized);
+        // Fallback: if any number is spoken (even with unrecognized prefix like "尿数9"), capture it!
         const bareNumberMatch = (!stemMatch && !leafMatch && !tillerMatch && !spadMatch && !plotMatch && !repMatch && !plantMatch)
-          ? normalized.match(/^\s*(\d+(?:\.\d+)?)\s*(?:センチ|cm|枚|本)?\s*$/i)
+          ? normalized.match(/(\d+(?:\.\d+)?)/)
           : null;
 
         if (stemMatch || leafMatch || tillerMatch || spadMatch || missingMatch || bareNumberMatch) {
@@ -505,26 +517,37 @@
           }
           if (bareNumberMatch) {
             const val = parseFloat(bareNumberMatch[1]);
-            if (rec.stemLength === null) {
-              rec.stemLength = val;
+            const assignField = (field) => {
+              if (field === 'stemLength') {
+                rec.stemLength = val;
+                spokenParts.push(`茎長 ${val}`);
+                if (val < 5 || val > 250) outOfRange = true;
+              } else if (field === 'leafCount') {
+                rec.leafCount = val;
+                spokenParts.push(`葉数 ${val}`);
+                if (val < 1 || val > 50) outOfRange = true;
+              } else if (field === 'tillerCount') {
+                rec.tillerCount = val;
+                spokenParts.push(`茎数 ${val}`);
+                if (val < 1 || val > 80) outOfRange = true;
+              } else if (field === 'spad') {
+                rec.spad = val;
+                spokenParts.push(`SPAD ${val}`);
+                if (val < 5 || val > 80) outOfRange = true;
+              }
               mutated = true;
-              spokenParts.push(`茎長 ${val}`);
-              if (val < 5 || val > 250) outOfRange = true;
+            };
+
+            if (inputMode !== 'auto') {
+              assignField(inputMode);
+            } else if (rec.stemLength === null) {
+              assignField('stemLength');
             } else if (rec.leafCount === null) {
-              rec.leafCount = val;
-              mutated = true;
-              spokenParts.push(`葉数 ${val}`);
-              if (val < 1 || val > 50) outOfRange = true;
+              assignField('leafCount');
             } else if (rec.tillerCount === null) {
-              rec.tillerCount = val;
-              mutated = true;
-              spokenParts.push(`茎数 ${val}`);
-              if (val < 1 || val > 80) outOfRange = true;
+              assignField('tillerCount');
             } else if (rec.spad === null) {
-              rec.spad = val;
-              mutated = true;
-              spokenParts.push(`SPAD ${val}`);
-              if (val < 5 || val > 80) outOfRange = true;
+              assignField('spad');
             } else {
               showToast('この株の4項目は入力済みです。「次へ」で次の株へ進めます', 'warn');
               speak('入力済みです。次へ進んでください');
@@ -952,6 +975,20 @@
       document.querySelectorAll('.sim-chip').forEach(btn => {
         btn.addEventListener('click', () => {
           handleVoiceCommand(btn.dataset.cmd);
+        });
+      });
+
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          inputMode = btn.dataset.mode;
+          document.querySelectorAll('.mode-btn').forEach(b => {
+            if (b === btn) {
+              b.className = 'mode-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-700 text-white cursor-pointer';
+            } else {
+              b.className = 'mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer';
+            }
+          });
+          showToast(`入力モード: ${btn.textContent}`, 'info');
         });
       });
 

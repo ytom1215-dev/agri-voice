@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agri-voice-v2';
+const CACHE_NAME = 'agri-voice-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -27,8 +27,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
-    })
+    fetch(event.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
