@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agri-voice-v3';
+const CACHE_NAME = 'agri-voice-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

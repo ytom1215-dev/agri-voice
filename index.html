@@ -41,7 +41,7 @@
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">圃場フェノタイピング音声野帳</h1>
-          <p class="text-xs text-emerald-200/90">ハンズフリー調査記録 &amp; CSVエクスポート (v2.1)</p>
+          <p class="text-xs text-emerald-200/90">ハンズフリー調査記録 &amp; CSVエクスポート (v2.2)</p>
         </div>
       </div>
 
@@ -175,6 +175,9 @@
           <button type="button" data-mode="leafCount" class="mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">葉数のみ</button>
           <button type="button" data-mode="tillerCount" class="mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">茎数のみ</button>
           <button type="button" data-mode="spad" class="mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">SPADのみ</button>
+          <button id="toggle-auto-next-btn" type="button" class="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 cursor-pointer">
+            <span>連続測定（自動次株）: <strong id="auto-next-label">ON</strong></span>
+          </button>
         </div>
 
         <!-- Big Mic Button & Transcript -->
@@ -297,6 +300,7 @@
       let isListening = false;
       let recognition = null;
       let inputMode = 'auto';
+      let autoAdvancePlant = true;
 
       // DOM Elements
       const plotInput = document.getElementById('plot-input');
@@ -323,6 +327,8 @@
       const modalBody = document.getElementById('modal-body');
       const modalFooter = document.getElementById('modal-footer');
       const modalCloseBtn = document.getElementById('modal-close-btn');
+      const toggleAutoNextBtn = document.getElementById('toggle-auto-next-btn');
+      const autoNextLabel = document.getElementById('auto-next-label');
 
       function loadRecords() {
         try {
@@ -569,9 +575,20 @@
           rec.updatedAt = nowTimeStr();
         }
 
-        // Next plant command
-        const goNext = /(?:次へ|つぎへ|次の株|^次$|^つぎ$)/.test(text);
-        if (goNext) {
+        // Next plant command or continuous measurement auto-advance
+        const goNextExplicit = /(?:次へ|つぎへ|次の株|^次$|^つぎ$)/.test(text);
+        let autoAdvanced = false;
+        if (mutated && autoAdvancePlant && !goNextExplicit) {
+          const curRec = findOrCreateRecord(target.plot, target.rep, target.plantNo);
+          const allFourFilled = curRec.stemLength !== null && curRec.leafCount !== null && curRec.tillerCount !== null && curRec.spad !== null;
+          if (inputMode !== 'auto' || allFourFilled) {
+            plantInput.value = String(target.plantNo + 1);
+            spokenParts.push(`次は株 ${plantInput.value}`);
+            autoAdvanced = true;
+          }
+        }
+
+        if (goNextExplicit) {
           plantInput.value = String(target.plantNo + 1);
           spokenParts.push(`株 ${plantInput.value} へ`);
         }
@@ -584,9 +601,9 @@
             speak(`${spokenParts.join('、')}。値が範囲外です。確認してください`);
           } else {
             showToast(`記録しました: ${spokenParts.join('、')}`, 'success');
-            speak(`${spokenParts.join('、')}、記録しました`);
+            speak(`${spokenParts.join('、')}`);
           }
-        } else if (goNext) {
+        } else if (goNextExplicit) {
           renderCurrentTargetPanel();
           showToast(`株 ${plantInput.value} へ移動しました`, 'info');
           speak(`株 ${plantInput.value}`);
@@ -990,6 +1007,15 @@
           });
           showToast(`入力モード: ${btn.textContent}`, 'info');
         });
+      });
+
+      toggleAutoNextBtn.addEventListener('click', () => {
+        autoAdvancePlant = !autoAdvancePlant;
+        autoNextLabel.textContent = autoAdvancePlant ? 'ON' : 'OFF';
+        toggleAutoNextBtn.className = autoAdvancePlant
+          ? 'ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 cursor-pointer'
+          : 'ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 cursor-pointer';
+        showToast(`連続測定（自動次株）を ${autoAdvancePlant ? 'ON' : 'OFF'} にしました`, 'info');
       });
 
       // Init
