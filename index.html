@@ -4,14 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>圃場フェノタイピング音声野帳 | ハンズフリー調査記録</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="./tailwind.css" />
+  <script src="./lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
   <style>
     body {
-      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      font-family: 'Inter', 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
       background-color: #f4f7f5;
       color: #1e293b;
     }
@@ -30,6 +31,9 @@
   <link rel="manifest" href="./manifest.json" />
   <meta name="theme-color" content="#064e3b" />
   <link rel="apple-touch-icon" href="./icon-192.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="音声野帳" />
 </head>
 <body class="min-h-screen flex flex-col">
   <!-- Header -->
@@ -41,7 +45,7 @@
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">圃場フェノタイピング音声野帳</h1>
-          <p class="text-xs text-emerald-200/90">ハンズフリー調査記録 &amp; CSVエクスポート (v2.2)</p>
+          <p class="text-xs text-emerald-200/90">ハンズフリー調査記録 &amp; CSVエクスポート (v2.3)</p>
         </div>
       </div>
 
@@ -65,23 +69,23 @@
 
     <!-- KPI Summary -->
     <section class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-sm">
         <div class="text-xs text-slate-500 font-medium">記録株数</div>
         <div id="kpi-count" class="text-2xl font-bold text-slate-800 mt-1 tabular-nums">0</div>
       </div>
-      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-sm">
         <div class="text-xs text-slate-500 font-medium">試験区数</div>
         <div id="kpi-plots" class="text-2xl font-bold text-emerald-700 mt-1 tabular-nums">0</div>
       </div>
-      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-sm">
         <div class="text-xs text-slate-500 font-medium">平均 茎長 (cm)</div>
         <div id="kpi-stem" class="text-2xl font-bold text-slate-800 mt-1 tabular-nums">--</div>
       </div>
-      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs">
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-sm">
         <div class="text-xs text-slate-500 font-medium">平均 葉数 (枚)</div>
         <div id="kpi-leaf" class="text-2xl font-bold text-slate-800 mt-1 tabular-nums">--</div>
       </div>
-      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-xs col-span-2 sm:col-span-1">
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-sm col-span-2 sm:col-span-1">
         <div class="text-xs text-slate-500 font-medium">欠測・異常</div>
         <div id="kpi-missing" class="text-2xl font-bold text-amber-600 mt-1 tabular-nums">0</div>
       </div>
@@ -90,7 +94,7 @@
     <!-- Top Control Grid: Current Target + Voice Input -->
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
       <!-- Left: Target Plot & Plant Selector -->
-      <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
+      <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
             <i data-lucide="map-pin" class="w-4 h-4 text-emerald-700"></i>
@@ -111,13 +115,17 @@
               <option value="2">反復 2</option>
               <option value="3">反復 3</option>
               <option value="4">反復 4</option>
+              <option value="5">反復 5</option>
+              <option value="6">反復 6</option>
+              <option value="7">反復 7</option>
+              <option value="8">反復 8</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">株番号</label>
             <div class="flex items-center border border-slate-300 rounded-lg overflow-hidden">
               <button id="plant-prev-btn" type="button" class="px-2.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm cursor-pointer">-</button>
-              <input id="plant-input" type="number" min="1" value="5" class="w-full text-center py-2 text-sm font-bold text-slate-800 focus:outline-none tabular-nums" />
+              <input id="plant-input" type="number" min="1" inputmode="numeric" value="1" class="w-full text-center py-2 text-sm font-bold text-slate-800 focus:outline-none tabular-nums" />
               <button id="plant-next-btn" type="button" class="px-2.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm cursor-pointer">+</button>
             </div>
           </div>
@@ -126,7 +134,7 @@
         <!-- Current Plant Live Values -->
         <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 space-y-2.5">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-semibold text-slate-600">入力中の個体データ (<span id="current-target-badge" class="text-emerald-700 font-bold">A-1 / 反復1 / 株5</span>)</span>
+            <span class="font-semibold text-slate-600">入力中の個体データ (<span id="current-target-badge" class="text-emerald-700 font-bold">A-1 / 反復1 / 株1</span>)</span>
             <button id="next-plant-action-btn" type="button" class="text-emerald-700 hover:text-emerald-800 font-semibold inline-flex items-center gap-1 cursor-pointer">
               <span>次の株へ</span>
               <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
@@ -158,7 +166,7 @@
       </div>
 
       <!-- Right: Voice Recognition & Command Simulator -->
-      <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs p-5 flex flex-col justify-between space-y-4">
+      <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
             <i data-lucide="mic" class="w-4 h-4 text-emerald-700"></i>
@@ -182,7 +190,7 @@
 
         <!-- Big Mic Button & Transcript -->
         <div class="flex flex-col sm:flex-row items-center gap-4 bg-emerald-50/60 rounded-xl p-4 border border-emerald-200/70">
-          <button id="mic-toggle-btn" type="button" class="w-20 h-20 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white flex flex-col items-center justify-center shadow-md transition shrink-0 cursor-pointer">
+          <button id="mic-toggle-btn" type="button" aria-label="音声入力の開始/停止" class="w-20 h-20 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white flex flex-col items-center justify-center shadow-md transition shrink-0 cursor-pointer">
             <i id="mic-icon" data-lucide="mic" class="w-7 h-7"></i>
             <span id="mic-btn-label" class="text-[11px] font-semibold mt-1">開始</span>
           </button>
@@ -190,7 +198,7 @@
           <div class="flex-1 w-full space-y-2 text-center sm:text-left">
             <div class="text-xs font-medium text-slate-500">認識テキスト / ステータス</div>
             <div id="transcript-box" class="min-h-[44px] px-3 py-2 bg-white rounded-lg border border-slate-200 text-sm font-medium text-slate-800 flex items-center">
-              マイクボタンを押して「茎長 45.2」「葉数 9」「次へ」と話してください
+              マイクを押し「茎長」と言ってから数値を続けて話します。「葉数」「茎数」「SPAD」で項目切替
             </div>
             <div class="text-[11px] text-slate-500">
               対応ワード: <span class="font-medium text-slate-700">茎長 / 草丈 / 葉数 / 茎数 / SPAD / 試験区 / 株 / 次へ / 欠測 / 倒伏 / 取り消し</span>
@@ -223,7 +231,7 @@
     </section>
 
     <!-- Data Table Section -->
-    <section class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
@@ -236,6 +244,9 @@
         </div>
 
         <div class="flex items-center gap-2">
+          <button id="undo-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+            <span>↩ 元に戻す</span>
+          </button>
           <button id="preview-csv-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 transition cursor-pointer">
             <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
             <span>CSVプレビュー</span>
@@ -285,22 +296,44 @@
 
   <script>
     (function () {
-      const STORAGE_KEY = 'agri_voice_survey_records_v1';
+      'use strict';
 
-      const SAMPLE_RECORDS = [
-        { id: 'r1', plot: 'A-1', rep: 1, plantNo: 1, stemLength: 42.5, leafCount: 8, tillerCount: 12, spad: 36.4, note: '', updatedAt: '09:12:04' },
-        { id: 'r2', plot: 'A-1', rep: 1, plantNo: 2, stemLength: 44.1, leafCount: 9, tillerCount: 13, spad: 37.8, note: '', updatedAt: '09:13:22' },
-        { id: 'r3', plot: 'A-1', rep: 1, plantNo: 3, stemLength: 39.8, leafCount: 8, tillerCount: 11, spad: 35.1, note: 'やや生育遅れ', updatedAt: '09:14:45' },
-        { id: 'r4', plot: 'A-1', rep: 1, plantNo: 4, stemLength: 45.0, leafCount: 9, tillerCount: 14, spad: 38.5, note: '', updatedAt: '09:16:10' }
+      const STORAGE_KEY = 'agri_voice_survey_records_v1';
+      const TARGET_KEY = 'agri_voice_target_v1';
+      const MAX_REP = 8;
+
+      const FIELD_ORDER = ['stemLength', 'leafCount', 'tillerCount', 'spad'];
+      const FIELD_META = {
+        stemLength:  { label: '茎長', min: 5, max: 250, int: false },
+        leafCount:   { label: '葉数', min: 1, max: 50,  int: true  },
+        tillerCount: { label: '茎数', min: 1, max: 80,  int: true  },
+        spad:        { label: 'SPAD', min: 5, max: 80,  int: false }
+      };
+
+      const DEMO_RECORDS = [
+        { plot: 'DEMO', rep: 1, plantNo: 1, stemLength: 42.5, leafCount: 8, tillerCount: 12, spad: 36.4, note: '' },
+        { plot: 'DEMO', rep: 1, plantNo: 2, stemLength: 44.1, leafCount: 9, tillerCount: 13, spad: 37.8, note: '' },
+        { plot: 'DEMO', rep: 1, plantNo: 3, stemLength: 39.8, leafCount: 8, tillerCount: 11, spad: 35.1, note: 'やや生育遅れ' },
+        { plot: 'DEMO', rep: 1, plantNo: 4, stemLength: 45.0, leafCount: 9, tillerCount: 14, spad: 38.5, note: '' }
       ];
 
       let records = loadRecords();
       let historyStack = [];
       let ttsEnabled = true;
       let isListening = false;
+      let wantListening = false;      // ユーザーが「聞き取り継続」を望んでいるか
       let recognition = null;
+      let restartTimer = null;
+      let lastFinalIndex = -1;        // 同一セッション内で処理済みのfinal結果index
+      let lastStartAt = 0;
+      let quickRestarts = 0;
+      let speakingUntil = 0;          // この時刻までは音声認識結果を無視（TTSの回り込み対策）
+      let ttsToken = 0;
+      let wakeLock = null;
       let inputMode = 'auto';
       let autoAdvancePlant = true;
+      let saveErrorShown = false;
+      let sweepStart = null;          // 項目ごとの連続入力を始めた株番号
 
       // DOM Elements
       const plotInput = document.getElementById('plot-input');
@@ -321,6 +354,7 @@
       const filterPlotSelect = document.getElementById('filter-plot-select');
       const downloadCsvBtn = document.getElementById('download-csv-btn');
       const previewCsvBtn = document.getElementById('preview-csv-btn');
+      const undoBtn = document.getElementById('undo-btn');
       const clearAllBtn = document.getElementById('clear-all-btn');
       const modalBackdrop = document.getElementById('modal-backdrop');
       const modalTitle = document.getElementById('modal-title');
@@ -330,26 +364,105 @@
       const toggleAutoNextBtn = document.getElementById('toggle-auto-next-btn');
       const autoNextLabel = document.getElementById('auto-next-label');
 
+      // ---------- Utilities ----------
+      function pad2(n) { return String(n).padStart(2, '0'); }
+
+      // ローカル日時 "YYYY-MM-DD HH:MM:SS"（旧版は "HH:MM:SS" のみで日付が欠落していた）
+      function nowStamp() {
+        const d = new Date();
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+      }
+
+      // ファイル名用のローカル日付（旧版は toISOString=UTC のため、日本の午前9時前は前日になっていた）
+      function todayStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      }
+
+      function displayStamp(stamp) {
+        const s = String(stamp || '');
+        return s.length > 8 ? s.slice(5, 16) : s; // "MM-DD HH:MM"（旧形式は時刻のみ）
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function numOrNull(v) {
+        return (typeof v === 'number' && isFinite(v)) ? v : null;
+      }
+
+      function normalizeRecord(r, i) {
+        if (!r || typeof r !== 'object') return null;
+        const plantNo = parseInt(r.plantNo, 10);
+        const rep = parseInt(r.rep, 10);
+        if (!r.plot || !plantNo || !rep) return null;
+        return {
+          id: String(r.id || ('r_' + Date.now() + '_' + i)),
+          plot: String(r.plot),
+          rep,
+          plantNo,
+          stemLength: numOrNull(r.stemLength),
+          leafCount: numOrNull(r.leafCount),
+          tillerCount: numOrNull(r.tillerCount),
+          spad: numOrNull(r.spad),
+          note: String(r.note || ''),
+          updatedAt: String(r.updatedAt || '')
+        };
+      }
+
       function loadRecords() {
+        let saved = null;
         try {
-          const saved = localStorage.getItem(STORAGE_KEY);
+          saved = localStorage.getItem(STORAGE_KEY);
           if (saved) {
             const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed)) return parsed;
+            if (Array.isArray(parsed)) return parsed.map(normalizeRecord).filter(Boolean);
           }
-        } catch (e) {}
-        return JSON.parse(JSON.stringify(SAMPLE_RECORDS));
+        } catch (e) {
+          // 壊れたデータを上書きで失わないよう退避
+          try { if (saved) localStorage.setItem(STORAGE_KEY + '_corrupt_' + Date.now(), saved); } catch (e2) {}
+        }
+        return [];
       }
 
       function saveRecords() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+          saveErrorShown = false;
+          return true;
+        } catch (e) {
+          if (!saveErrorShown) {
+            saveErrorShown = true;
+            showToast('端末への保存に失敗しました。早めにCSVで退避してください', 'error');
+          }
+          return false;
+        }
+      }
+
+      function saveTarget() {
+        try { localStorage.setItem(TARGET_KEY, JSON.stringify(getCurrentTarget())); } catch (e) {}
+      }
+
+      function restoreTarget() {
+        try {
+          const t = JSON.parse(localStorage.getItem(TARGET_KEY) || 'null');
+          if (t && t.plot) setTarget({
+            plot: String(t.plot),
+            rep: Math.min(MAX_REP, Math.max(1, parseInt(t.rep, 10) || 1)),
+            plantNo: Math.max(1, parseInt(t.plantNo, 10) || 1)
+          });
         } catch (e) {}
       }
 
-      function nowTimeStr() {
-        const d = new Date();
-        return d.toTimeString().slice(0, 8);
+      function setTarget(t) {
+        plotInput.value = t.plot;
+        repSelect.value = String(t.rep);
+        plantInput.value = String(t.plantNo);
       }
 
       function showToast(message, type = 'info') {
@@ -370,23 +483,32 @@
         }, 3000);
       }
 
+      // ---------- TTS（マイクへの回り込みを無視する） ----------
       function speak(text) {
-        if (!ttsEnabled) return;
+        if (!ttsEnabled || !text) return;
         try {
           if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
+            const my = ++ttsToken;
             const utter = new SpeechSynthesisUtterance(text);
             utter.lang = 'ja-JP';
             utter.rate = 1.15;
+            speakingUntil = Infinity;
+            const done = () => { if (my === ttsToken) speakingUntil = Date.now() + 700; };
+            utter.onend = done;
+            utter.onerror = done;
+            // onend が来ない環境でマイクが永久に無視されるのを防ぐ保険
+            setTimeout(() => { if (my === ttsToken && speakingUntil === Infinity) speakingUntil = Date.now() + 300; },
+              Math.min(10000, 1500 + text.length * 250));
             window.speechSynthesis.speak(utter);
           }
-        } catch (e) {}
+        } catch (e) { speakingUntil = 0; }
       }
 
       function getCurrentTarget() {
         return {
-          plot: (plotInput.value || 'A-1').trim().toUpperCase(),
-          rep: parseInt(repSelect.value, 10) || 1,
+          plot: ((plotInput.value || '').trim().toUpperCase()) || 'A-1',
+          rep: Math.min(MAX_REP, Math.max(1, parseInt(repSelect.value, 10) || 1)),
           plantNo: Math.max(1, parseInt(plantInput.value, 10) || 1)
         };
       }
@@ -396,84 +518,125 @@
         if (!rec) {
           rec = {
             id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-            plot,
-            rep,
-            plantNo,
-            stemLength: null,
-            leafCount: null,
-            tillerCount: null,
-            spad: null,
+            plot, rep, plantNo,
+            stemLength: null, leafCount: null, tillerCount: null, spad: null,
             note: '',
-            updatedAt: nowTimeStr()
+            updatedAt: nowStamp()
           };
           records.push(rec);
         }
         return rec;
       }
 
-      function pushUndoSnapshot() {
-        historyStack.push(JSON.stringify(records));
+      // Undo: records だけでなく調査対象（試験区/反復/株）も戻す
+      function pushUndoSnapshot(target) {
+        historyStack.push({ records: JSON.stringify(records), target: target || getCurrentTarget() });
         if (historyStack.length > 30) historyStack.shift();
       }
 
-      // Parse Japanese agricultural voice commands
+      function undo() {
+        if (historyStack.length === 0) {
+          showToast('取り消せる履歴がありません', 'warn');
+          speak('取り消せる履歴がありません');
+          return;
+        }
+        const snap = historyStack.pop();
+        records = JSON.parse(snap.records);
+        setTarget(snap.target);
+        saveRecords();
+        renderAll();
+        showToast('直前の操作を取り消しました', 'info');
+        speak('取り消しました');
+      }
+
+      // ---------- 数値の正規化（全角・漢数字・「点」） ----------
+      const KANJI_DIGITS = { '〇': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9 };
+
+      function kanjiToInt(s) {
+        if (!/[十百]/.test(s)) return s.split('').map(c => KANJI_DIGITS[c]).join(''); // 四五 → "45"
+        let total = 0, cur = 0;
+        for (const c of s) {
+          if (c in KANJI_DIGITS) cur = KANJI_DIGITS[c];
+          else if (c === '十') { total += (cur || 1) * 10; cur = 0; }
+          else if (c === '百') { total += (cur || 1) * 100; cur = 0; }
+        }
+        return String(total + cur);
+      }
+
+      function normalizeNumbers(s) {
+        return s
+          .replace(/[０-９Ａ-Ｚａ-ｚ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+          .replace(/．/g, '.')
+          .replace(/点\s*([〇一二三四五六七八九]+)/g, (m, d) => '点' + d.split('').map(c => KANJI_DIGITS[c]).join(''))
+          .replace(/[〇一二三四五六七八九十百]+/g, (m) => kanjiToInt(m))
+          .replace(/(\d+)\s*点\s*(\d+)/g, '$1.$2');
+      }
+
+      function currentBadgeText() {
+        const t = getCurrentTarget();
+        return `${t.plot} / 反復${t.rep} / 株${t.plantNo}`;
+      }
+
+      // ---------- 音声コマンド解析 ----------
       function handleVoiceCommand(rawText) {
-        const text = rawText.replace(/[。、！!？?]/g, ' ').trim();
+        const text = normalizeNumbers(String(rawText).replace(/[。、！!？?]/g, ' ')).replace(/\s+/g, ' ').trim();
         if (!text) return;
         transcriptBox.textContent = `「${text}」`;
 
         if (/取り消し|とりけし|キャンセル|元に戻す/.test(text)) {
-          if (historyStack.length > 0) {
-            records = JSON.parse(historyStack.pop());
-            saveRecords();
-            renderAll();
-            showToast('直前の記録を取り消しました', 'info');
-            speak('直前の記録を取り消しました');
-          } else {
-            showToast('取り消せる履歴がありません', 'warn');
-            speak('取り消せる履歴がありません');
-          }
+          undo();
           return;
         }
 
+        const pre = getCurrentTarget();
+        const spokenParts = [];
+        let targetTouched = false;
+        let targetChanged = false;
+
         // Plot change
-        const plotMatch = text.match(/(?:試験区|プロット|区)\s*([A-Za-z0-9\-ー]+)/i);
+        const plotMatch = text.match(/(?:試験区|プロット|区)\s*([A-Za-z0-9\-ー‐‑–—−－]+)/i);
         if (plotMatch) {
-          const newPlot = plotMatch[1].replace(/ー/g, '-').toUpperCase();
+          const newPlot = plotMatch[1].replace(/[ー‐‑–—−－]/g, '-').toUpperCase();
+          targetTouched = true;
+          if (newPlot !== pre.plot) targetChanged = true;
           plotInput.value = newPlot;
           showToast(`試験区を ${newPlot} に変更しました`, 'info');
-          speak(`試験区 ${newPlot}`);
+          spokenParts.push(`試験区 ${newPlot}`);
         }
 
-        // Rep change
-        const repMatch = text.match(/(?:反復|はんぷく)\s*(\d+)/);
+        // Rep change（旧版は5以上を黙って4に丸めて別反復へ記録していた → 範囲外は拒否）
+        const repMatch = text.match(/(?:反復|はんぷく|ハンプク)\s*(\d+)/);
         if (repMatch) {
-          const r = Math.min(4, Math.max(1, parseInt(repMatch[1], 10)));
-          repSelect.value = String(r);
-          showToast(`反復を ${r} に変更しました`, 'info');
+          const r = parseInt(repMatch[1], 10);
+          targetTouched = true;
+          if (r < 1 || r > MAX_REP) {
+            showToast(`反復は 1〜${MAX_REP} で指定してください（${r} は無効）`, 'warn');
+            speak('反復の番号が範囲外です');
+          } else {
+            if (r !== pre.rep) targetChanged = true;
+            repSelect.value = String(r);
+            showToast(`反復を ${r} に変更しました`, 'info');
+            spokenParts.push(`反復 ${r}`);
+          }
         }
 
-        // Plant number jump
+        // Plant number jump（試験区・反復が変わったのに株番号の指定がなければ株1に戻す）
         const plantMatch = text.match(/(?:株|個体)\s*(\d+)/);
         if (plantMatch) {
           plantInput.value = String(Math.max(1, parseInt(plantMatch[1], 10)));
-          renderCurrentTargetPanel();
-          speak(`株 ${plantInput.value}`);
+          targetTouched = true;
+          spokenParts.push(`株 ${plantInput.value}`);
+        } else if (targetChanged) {
+          plantInput.value = '1';
+          spokenParts.push('株 1');
         }
 
+        if (targetTouched) sweepStart = null;
         const target = getCurrentTarget();
-        let mutated = false;
-        let spokenParts = [];
-        let outOfRange = false;
 
-        // Normalize full-width numbers, Japanese decimal "点", and common speech misrecognitions
-        const toHalfWidth = (s) => s
-          .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-          .replace(/．/g, '.')
-          .replace(/(\d+)\s*点\s*(\d+)/g, '$1.$2');
-
-        const normalized = toHalfWidth(text)
-          .replace(/スパッド|スパット|スパッツ|スパ|エスピーエーディー|ＳＰＡＤ/gi, 'SPAD')
+        // 音声認識の誤変換を補正
+        const normalized = text
+          .replace(/スパッド|スパット|スパッツ|スパ|エスピーエーディー/gi, 'SPAD')
           .replace(/久喜町|慶長|傾聴|警庁|県庁|計長|軽重|系長|軽長|警調|京町|成長|身長|会長|けいちょう|くさたけ|草丈|長さ|高さ/g, '茎長')
           .replace(/尿数|陽数|用数|要す|幼数|容数|養数|様子|要数|用水|洋数|ようすう|はすう|葉っぱ|はっぱ|葉の数|枚数/g, '葉数')
           .replace(/係数|軽数|件数|経数|けいすう|茎の数|本数|分げつ|ぶんげつ/g, '茎数')
@@ -484,107 +647,113 @@
         const tillerMatch = normalized.match(/茎数\s*(\d+(?:\.\d+)?)/);
         const spadMatch = normalized.match(/SPAD\s*(\d+(?:\.\d+)?)/i);
         const missingMatch = /(欠測|枯死|倒伏|病害|虫害)/.test(normalized);
-        // Fallback: if any number is spoken (even with unrecognized prefix like "尿数9"), capture it!
         const bareNumberMatch = (!stemMatch && !leafMatch && !tillerMatch && !spadMatch && !plotMatch && !repMatch && !plantMatch)
           ? normalized.match(/(\d+(?:\.\d+)?)/)
           : null;
 
-        if (stemMatch || leafMatch || tillerMatch || spadMatch || missingMatch || bareNumberMatch) {
-          pushUndoSnapshot();
-          const rec = findOrCreateRecord(target.plot, target.rep, target.plantNo);
+        // 項目名だけ発話 → その項目の連続入力モードへ（株は連続入力の開始株へ戻る）
+        const fieldOnly = normalized.match(/^(茎長|葉数|茎数|SPAD)(?:\s*(?:モード|から|です|お願いします))?$/i);
+        if (fieldOnly) {
+          const key = fieldOnly[1].toUpperCase();
+          const f = { '茎長': 'stemLength', '葉数': 'leafCount', '茎数': 'tillerCount', 'SPAD': 'spad' }[key];
+          if (sweepStart === null) sweepStart = target.plantNo;
+          setInputMode(f);
+          plantInput.value = String(sweepStart);
+          renderAll();
+          const label = FIELD_META[f].label;
+          showToast(`${label}モード: 株${sweepStart}から数値を続けて話してください`, 'success');
+          speak(`${label}、株${sweepStart}から`);
+          return;
+        }
 
-          if (stemMatch) {
-            const val = parseFloat(stemMatch[1]);
-            rec.stemLength = val;
-            mutated = true;
-            spokenParts.push(`茎長 ${val}`);
-            if (val < 5 || val > 250) outOfRange = true;
+        // 単一項目モードで数値を連続発話（例「45 46 47」）→ 株1,2,3 へ順に記録
+        if (inputMode !== 'auto' && autoAdvancePlant && !stemMatch && !leafMatch && !tillerMatch && !spadMatch &&
+            !plotMatch && !repMatch && !plantMatch && !missingMatch) {
+          const nums = Array.from(normalized.matchAll(/\d+(?:\.\d+)?/g)).map(m => parseFloat(m[0]));
+          if (nums.length > 1) {
+            pushUndoSnapshot(pre);
+            const meta = FIELD_META[inputMode];
+            let p = target.plantNo;
+            let bad = false;
+            nums.forEach((val) => {
+              const rec = findOrCreateRecord(target.plot, target.rep, p);
+              rec[inputMode] = val;
+              rec.updatedAt = nowStamp();
+              if (val < meta.min || val > meta.max || (meta.int && !Number.isInteger(val))) bad = true;
+              p++;
+            });
+            plantInput.value = String(p);
+            saveRecords();
+            renderAll();
+            const msg = `${meta.label} ${nums.join('、')}（株${target.plantNo}〜${p - 1}）`;
+            showToast(bad ? `範囲外を含みます: ${msg}` : `記録しました: ${msg}`, bad ? 'warn' : 'success');
+            speak(bad ? `${nums.length}件。範囲外があります。確認してください` : `${nums.length}件、次は株${p}`);
+            return;
           }
-          if (leafMatch) {
-            const val = parseFloat(leafMatch[1]);
-            rec.leafCount = val;
+        }
+
+        const hasMeasure = !!(stemMatch || leafMatch || tillerMatch || spadMatch || missingMatch || bareNumberMatch);
+        let mutated = false;
+        let measured = false;   // 計測値が入ったか（備考のみは false）
+        let outOfRange = false;
+        let warned = false;
+
+        if (hasMeasure) {
+          pushUndoSnapshot(pre);
+          const rec = findOrCreateRecord(target.plot, target.rep, target.plantNo);
+          const setField = (field, val) => {
+            const meta = FIELD_META[field];
+            rec[field] = val;
+            spokenParts.push(`${meta.label} ${val}`);
+            if (val < meta.min || val > meta.max || (meta.int && !Number.isInteger(val))) outOfRange = true;
             mutated = true;
-            spokenParts.push(`葉数 ${val}`);
-            if (val < 1 || val > 50) outOfRange = true;
-          }
-          if (tillerMatch) {
-            const val = parseFloat(tillerMatch[1]);
-            rec.tillerCount = val;
-            mutated = true;
-            spokenParts.push(`茎数 ${val}`);
-            if (val < 1 || val > 80) outOfRange = true;
-          }
-          if (spadMatch) {
-            const val = parseFloat(spadMatch[1]);
-            rec.spad = val;
-            mutated = true;
-            spokenParts.push(`SPAD ${val}`);
-            if (val < 5 || val > 80) outOfRange = true;
-          }
+            measured = true;
+          };
+
+          if (stemMatch) setField('stemLength', parseFloat(stemMatch[1]));
+          if (leafMatch) setField('leafCount', parseFloat(leafMatch[1]));
+          if (tillerMatch) setField('tillerCount', parseFloat(tillerMatch[1]));
+          if (spadMatch) setField('spad', parseFloat(spadMatch[1]));
+
           if (bareNumberMatch) {
             const val = parseFloat(bareNumberMatch[1]);
-            const assignField = (field) => {
-              if (field === 'stemLength') {
-                rec.stemLength = val;
-                spokenParts.push(`茎長 ${val}`);
-                if (val < 5 || val > 250) outOfRange = true;
-              } else if (field === 'leafCount') {
-                rec.leafCount = val;
-                spokenParts.push(`葉数 ${val}`);
-                if (val < 1 || val > 50) outOfRange = true;
-              } else if (field === 'tillerCount') {
-                rec.tillerCount = val;
-                spokenParts.push(`茎数 ${val}`);
-                if (val < 1 || val > 80) outOfRange = true;
-              } else if (field === 'spad') {
-                rec.spad = val;
-                spokenParts.push(`SPAD ${val}`);
-                if (val < 5 || val > 80) outOfRange = true;
-              }
-              mutated = true;
-            };
-
-            if (inputMode !== 'auto') {
-              assignField(inputMode);
-            } else if (rec.stemLength === null) {
-              assignField('stemLength');
-            } else if (rec.leafCount === null) {
-              assignField('leafCount');
-            } else if (rec.tillerCount === null) {
-              assignField('tillerCount');
-            } else if (rec.spad === null) {
-              assignField('spad');
+            const field = inputMode !== 'auto' ? inputMode : FIELD_ORDER.find(f => rec[f] === null);
+            if (field) {
+              setField(field, val);
             } else {
+              warned = true;
               showToast('この株の4項目は入力済みです。「次へ」で次の株へ進めます', 'warn');
               speak('入力済みです。次へ進んでください');
             }
           }
+
           if (missingMatch) {
-            const notes = [];
-            if (/欠測/.test(normalized)) notes.push('欠測');
-            if (/倒伏/.test(normalized)) notes.push('倒伏あり');
-            if (/枯死/.test(normalized)) notes.push('枯死');
-            if (/病害/.test(normalized)) notes.push('病害あり');
-            if (/虫害/.test(normalized)) notes.push('虫害あり');
-            const newNote = notes.join('・');
-            rec.note = rec.note ? `${rec.note} / ${newNote}` : newNote;
+            const labels = [];
+            if (/欠測/.test(normalized)) labels.push('欠測');
+            if (/倒伏/.test(normalized)) labels.push('倒伏あり');
+            if (/枯死/.test(normalized)) labels.push('枯死');
+            if (/病害/.test(normalized)) labels.push('病害あり');
+            if (/虫害/.test(normalized)) labels.push('虫害あり');
+            const fresh = labels.filter(l => !rec.note.includes(l)).join('・'); // 重複追記を防ぐ
+            if (fresh) rec.note = rec.note ? `${rec.note} / ${fresh}` : fresh;
             mutated = true;
-            spokenParts.push(newNote);
+            spokenParts.push(labels.join('・'));
           }
 
-          rec.updatedAt = nowTimeStr();
+          if (mutated) rec.updatedAt = nowStamp();
+          else historyStack.pop(); // 何も変わらなかった操作を履歴に残さない
         }
 
         // Next plant command or continuous measurement auto-advance
         const goNextExplicit = /(?:次へ|つぎへ|次の株|^次$|^つぎ$)/.test(text);
-        let autoAdvanced = false;
         if (mutated && autoAdvancePlant && !goNextExplicit) {
           const curRec = findOrCreateRecord(target.plot, target.rep, target.plantNo);
-          const allFourFilled = curRec.stemLength !== null && curRec.leafCount !== null && curRec.tillerCount !== null && curRec.spad !== null;
-          if (inputMode !== 'auto' || allFourFilled) {
+          const allFourFilled = FIELD_ORDER.every(f => curRec[f] !== null);
+          const unmeasurable = /欠測|枯死/.test(normalized); // 測れない株は次へ進める
+          // 備考のみ（倒伏など）では進めない。計測値が入ったときだけ進む
+          if ((measured && (inputMode !== 'auto' || allFourFilled)) || unmeasurable) {
             plantInput.value = String(target.plantNo + 1);
             spokenParts.push(`次は株 ${plantInput.value}`);
-            autoAdvanced = true;
           }
         }
 
@@ -596,23 +765,45 @@
         if (mutated) {
           saveRecords();
           renderAll();
+          const msg = spokenParts.join('、');
           if (outOfRange) {
-            showToast(`範囲外の値を記録しました: ${spokenParts.join('、')}`, 'warn');
-            speak(`${spokenParts.join('、')}。値が範囲外です。確認してください`);
+            showToast(`範囲外の値を記録しました: ${msg}`, 'warn');
+            speak(`${msg}。値が範囲外です。確認してください`);
           } else {
-            showToast(`記録しました: ${spokenParts.join('、')}`, 'success');
-            speak(`${spokenParts.join('、')}`);
+            showToast(`記録しました: ${msg}`, 'success');
+            speak(msg);
           }
-        } else if (goNextExplicit) {
-          renderCurrentTargetPanel();
-          showToast(`株 ${plantInput.value} へ移動しました`, 'info');
-          speak(`株 ${plantInput.value}`);
-        } else if (!plotMatch && !repMatch && !plantMatch) {
+        } else if (goNextExplicit || targetTouched) {
+          // 旧版は試験区・反復のみ変更時に画面が更新されなかった
+          renderAll();
+          showToast(`現在: ${currentBadgeText()}`, 'info');
+          speak(spokenParts.join('、'));
+        } else if (!warned) {
           showToast('コマンドを認識できませんでした（「茎長 45.2」のように入力）', 'warn');
         }
       }
 
-      // Speech Recognition Setup
+      // ---------- Speech Recognition ----------
+      function acquireWakeLock() {
+        try {
+          if ('wakeLock' in navigator && !wakeLock) {
+            navigator.wakeLock.request('screen').then((lock) => {
+              wakeLock = lock;
+              lock.addEventListener('release', () => { wakeLock = null; });
+            }).catch(() => {});
+          }
+        } catch (e) {}
+      }
+
+      function releaseWakeLock() {
+        try { if (wakeLock) wakeLock.release(); } catch (e) {}
+        wakeLock = null;
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && wantListening) acquireWakeLock();
+      });
+
       function initSpeechRecognition() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -630,6 +821,8 @@
 
         recognition.onstart = () => {
           isListening = true;
+          lastFinalIndex = -1;
+          lastStartAt = Date.now();
           micToggleBtn.classList.add('bg-rose-600', 'hover:bg-rose-500', 'mic-active');
           micToggleBtn.classList.remove('bg-emerald-700', 'hover:bg-emerald-600');
           micBtnLabel.textContent = '停止';
@@ -642,29 +835,54 @@
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const res = event.results[i];
             if (res.isFinal) {
+              if (i <= lastFinalIndex) continue;      // Android Chrome での再配信による二重実行を防ぐ
+              lastFinalIndex = i;
+              if (Date.now() < speakingUntil) continue; // 復唱音声の拾い込みを無視
               handleVoiceCommand(res[0].transcript);
-            } else {
+            } else if (Date.now() >= speakingUntil) {
               interim += res[0].transcript;
             }
           }
-          if (interim) {
-            transcriptBox.textContent = `認識中: ${interim}...`;
-          }
+          if (interim) transcriptBox.textContent = `認識中: ${interim}...`;
         };
 
         recognition.onerror = (event) => {
-          isListening = false;
-          resetMicButton();
-          if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          const err = event.error;
+          if (err === 'no-speech' || err === 'aborted') return; // onend 側で自動再開
+          wantListening = false;
+          if (err === 'not-allowed' || err === 'service-not-allowed') {
             showToast('マイク許可がありません。下部の音声テスト入力をご利用ください', 'warn');
+          } else if (err === 'network') {
+            showToast('音声認識サーバーに接続できません（Chromeの音声認識は通信必須。圃場の電波を確認）', 'error');
+          } else if (err === 'audio-capture') {
+            showToast('マイクが見つかりません', 'error');
           } else {
-            showToast(`音声認識エラー (${event.error})`, 'error');
+            showToast(`音声認識エラー (${err})`, 'error');
           }
         };
 
         recognition.onend = () => {
           isListening = false;
+          if (wantListening) {
+            // ブラウザが無音等でセッションを終了 → ハンズフリー継続のため自動再開
+            quickRestarts = (Date.now() - lastStartAt < 1000) ? quickRestarts + 1 : 0;
+            if (quickRestarts >= 5) {
+              wantListening = false;
+              showToast('音声認識が繰り返し停止したため終了しました。再開してください', 'warn');
+              resetMicButton();
+              releaseWakeLock();
+              return;
+            }
+            clearTimeout(restartTimer);
+            restartTimer = setTimeout(() => {
+              if (wantListening && !isListening) {
+                try { recognition.start(); } catch (e) {}
+              }
+            }, 300);
+            return;
+          }
           resetMicButton();
+          releaseWakeLock();
         };
       }
 
@@ -683,18 +901,26 @@
           showToast('このブラウザ環境ではマイク音声認識が利用できません。テスト入力をお使いください', 'warn');
           return;
         }
-        if (isListening) {
-          recognition.stop();
+        if (wantListening) {
+          wantListening = false;
+          clearTimeout(restartTimer);
+          try { recognition.stop(); } catch (e) {}
+          resetMicButton();
+          releaseWakeLock();
         } else {
+          wantListening = true;
+          quickRestarts = 0;
           try {
             recognition.start();
+            acquireWakeLock();
           } catch (e) {
+            wantListening = false;
             showToast('音声認識の開始に失敗しました', 'error');
           }
         }
       });
 
-      // Render KPIs
+      // ---------- Render ----------
       function renderKPIs() {
         document.getElementById('kpi-count').textContent = String(records.length);
         const plots = new Set(records.map(r => r.plot));
@@ -702,7 +928,7 @@
 
         const stems = records.map(r => r.stemLength).filter(v => typeof v === 'number' && !isNaN(v));
         const leaves = records.map(r => r.leafCount).filter(v => typeof v === 'number' && !isNaN(v));
-        const missingCount = records.filter(r => r.note && r.note.includes('欠測')).length;
+        const abnormalCount = records.filter(r => /欠測|倒伏|枯死|病害|虫害/.test(r.note || '')).length;
 
         document.getElementById('kpi-stem').textContent = stems.length > 0
           ? (stems.reduce((a, b) => a + b, 0) / stems.length).toFixed(1)
@@ -710,22 +936,23 @@
         document.getElementById('kpi-leaf').textContent = leaves.length > 0
           ? (leaves.reduce((a, b) => a + b, 0) / leaves.length).toFixed(1)
           : '--';
-        document.getElementById('kpi-missing').textContent = String(missingCount);
+        document.getElementById('kpi-missing').textContent = String(abnormalCount);
       }
 
-      // Render Current Target Panel
       function renderCurrentTargetPanel() {
         const target = getCurrentTarget();
-        document.getElementById('current-target-badge').textContent = `${target.plot} / 反復${target.rep} / 株${target.plantNo}`;
+        plantInput.value = String(target.plantNo); // 0・負数・空欄を正規化
+        document.getElementById('current-target-badge').textContent = currentBadgeText();
         const rec = records.find(r => r.plot === target.plot && r.rep === target.rep && r.plantNo === target.plantNo);
-        document.getElementById('cur-stem').textContent = rec && rec.stemLength !== null ? rec.stemLength : '--';
-        document.getElementById('cur-leaf').textContent = rec && rec.leafCount !== null ? rec.leafCount : '--';
-        document.getElementById('cur-tiller').textContent = rec && rec.tillerCount !== null ? rec.tillerCount : '--';
-        document.getElementById('cur-spad').textContent = rec && rec.spad !== null ? rec.spad : '--';
+        const show = (v) => (v !== null && v !== undefined) ? v : '--';
+        document.getElementById('cur-stem').textContent = rec ? show(rec.stemLength) : '--';
+        document.getElementById('cur-leaf').textContent = rec ? show(rec.leafCount) : '--';
+        document.getElementById('cur-tiller').textContent = rec ? show(rec.tillerCount) : '--';
+        document.getElementById('cur-spad').textContent = rec ? show(rec.spad) : '--';
         document.getElementById('cur-note').textContent = rec && rec.note ? rec.note : 'なし';
+        saveTarget();
       }
 
-      // Render Plot Filter Dropdown
       function renderPlotFilter() {
         const current = filterPlotSelect.value;
         const plots = Array.from(new Set(records.map(r => r.plot))).sort();
@@ -739,21 +966,27 @@
         if (plots.includes(current)) filterPlotSelect.value = current;
       }
 
-      // Render Table
-      function renderTable() {
-        const filterVal = filterPlotSelect.value;
-        const filtered = filterVal === 'ALL' ? records : records.filter(r => r.plot === filterVal);
-        const sorted = [...filtered].sort((a, b) => {
-          if (a.plot !== b.plot) return a.plot.localeCompare(b.plot);
+      function sortRecords(list) {
+        return [...list].sort((a, b) => {
+          if (a.plot !== b.plot) return a.plot.localeCompare(b.plot, 'en', { numeric: true });
           if (a.rep !== b.rep) return a.rep - b.rep;
           return a.plantNo - b.plantNo;
         });
+      }
+
+      function renderTable() {
+        const filterVal = filterPlotSelect.value;
+        const filtered = filterVal === 'ALL' ? records : records.filter(r => r.plot === filterVal);
+        const sorted = sortRecords(filtered);
 
         if (sorted.length === 0) {
           recordsTbody.innerHTML = `
             <tr>
               <td colspan="10" class="py-8 text-center text-slate-400 text-sm">
                 記録データがありません。音声入力または下のテストコマンドで記録を追加してください。
+                <div class="mt-3">
+                  <button id="load-demo-btn" type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer">デモデータ（試験区 DEMO）を読み込む</button>
+                </div>
               </td>
             </tr>`;
           return;
@@ -765,40 +998,32 @@
           const isMissing = r.note && r.note.includes('欠測');
           const rowClass = isActive ? 'bg-emerald-50/70' : (isMissing ? 'bg-amber-50/40' : 'hover:bg-slate-50');
           return `
-            <tr class="${rowClass}" data-id="${r.id}">
+            <tr class="${rowClass}" data-id="${escapeHtml(r.id)}">
               <td class="py-2.5 px-4 font-semibold text-slate-800">${escapeHtml(r.plot)}</td>
               <td class="py-2.5 px-3 tabular-nums text-slate-700">${r.rep}</td>
               <td class="py-2.5 px-3 tabular-nums font-semibold text-slate-800">${r.plantNo}</td>
               <td class="py-2.5 px-3 tabular-nums">
-                <input type="number" step="0.1" data-field="stemLength" value="${r.stemLength ?? ''}" placeholder="--" class="cell-input w-20 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
+                <input type="number" step="0.1" min="0" data-field="stemLength" value="${r.stemLength ?? ''}" placeholder="--" class="cell-input w-20 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
               </td>
               <td class="py-2.5 px-3 tabular-nums">
-                <input type="number" step="1" data-field="leafCount" value="${r.leafCount ?? ''}" placeholder="--" class="cell-input w-16 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
+                <input type="number" step="1" min="0" data-field="leafCount" value="${r.leafCount ?? ''}" placeholder="--" class="cell-input w-16 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
               </td>
               <td class="py-2.5 px-3 tabular-nums">
-                <input type="number" step="1" data-field="tillerCount" value="${r.tillerCount ?? ''}" placeholder="--" class="cell-input w-16 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
+                <input type="number" step="1" min="0" data-field="tillerCount" value="${r.tillerCount ?? ''}" placeholder="--" class="cell-input w-16 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
               </td>
               <td class="py-2.5 px-3 tabular-nums">
-                <input type="number" step="0.1" data-field="spad" value="${r.spad ?? ''}" placeholder="--" class="cell-input w-20 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
+                <input type="number" step="0.1" min="0" data-field="spad" value="${r.spad ?? ''}" placeholder="--" class="cell-input w-20 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-sm" />
               </td>
               <td class="py-2.5 px-3">
                 <input type="text" data-field="note" value="${escapeHtml(r.note || '')}" placeholder="なし" class="cell-input w-32 px-2 py-1 rounded border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white bg-transparent text-xs text-slate-700" />
               </td>
-              <td class="py-2.5 px-3 text-xs text-slate-400 tabular-nums whitespace-nowrap">${escapeHtml(r.updatedAt)}</td>
+              <td class="py-2.5 px-3 text-xs text-slate-400 tabular-nums whitespace-nowrap">${escapeHtml(displayStamp(r.updatedAt))}</td>
               <td class="py-2.5 px-3 text-right whitespace-nowrap">
                 <button type="button" class="select-row-btn text-xs text-emerald-700 hover:underline mr-2 cursor-pointer">選択</button>
                 <button type="button" class="delete-row-btn text-xs text-rose-600 hover:underline cursor-pointer">削除</button>
               </td>
             </tr>`;
         }).join('');
-      }
-
-      function escapeHtml(str) {
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;');
       }
 
       function renderAll() {
@@ -808,7 +1033,16 @@
         renderTable();
       }
 
-      // Table Event Delegation
+      function loadDemo() {
+        pushUndoSnapshot();
+        const stamp = nowStamp();
+        DEMO_RECORDS.forEach((d, i) => records.push(Object.assign({ id: 'demo_' + Date.now() + '_' + i, updatedAt: stamp }, d)));
+        saveRecords();
+        renderAll();
+        showToast('デモデータ（試験区 DEMO）を追加しました。本番前に削除してください', 'info');
+      }
+
+      // ---------- Table events ----------
       recordsTbody.addEventListener('change', (e) => {
         if (!e.target.classList.contains('cell-input')) return;
         const tr = e.target.closest('tr');
@@ -822,15 +1056,16 @@
           rec.note = e.target.value.trim();
         } else {
           const val = e.target.value === '' ? null : parseFloat(e.target.value);
-          rec[field] = isNaN(val) ? null : val;
+          rec[field] = (val === null || isNaN(val)) ? null : val;
         }
-        rec.updatedAt = nowTimeStr();
+        rec.updatedAt = nowStamp();
         saveRecords();
         renderKPIs();
         renderCurrentTargetPanel();
       });
 
       recordsTbody.addEventListener('click', (e) => {
+        if (e.target.closest('#load-demo-btn')) { loadDemo(); return; }
         const tr = e.target.closest('tr');
         if (!tr) return;
         const id = tr.dataset.id;
@@ -838,9 +1073,7 @@
         if (!rec) return;
 
         if (e.target.classList.contains('select-row-btn')) {
-          plotInput.value = rec.plot;
-          repSelect.value = String(rec.rep);
-          plantInput.value = String(rec.plantNo);
+          setTarget({ plot: rec.plot, rep: rec.rep, plantNo: rec.plantNo });
           renderAll();
           showToast(`${rec.plot} 反復${rec.rep} 株${rec.plantNo} を選択しました`, 'info');
         } else if (e.target.classList.contains('delete-row-btn')) {
@@ -848,52 +1081,70 @@
           records = records.filter(r => r.id !== id);
           saveRecords();
           renderAll();
-          showToast('1件の記録を削除しました', 'info');
+          showToast('1件の記録を削除しました（「元に戻す」で復元できます）', 'info');
         }
       });
 
-      // CSV Generation
+      // ---------- CSV ----------
+      function csvText(v) {
+        return `"${String(v ?? '').replace(/"/g, '""')}"`;
+      }
+
       function generateCsvContent() {
-        const headers = ['試験区', '反復', '株番号', '茎長_cm', '葉数_枚', '茎数_本', 'SPAD値', '状態_備考', '記録時刻'];
-        const sorted = [...records].sort((a, b) => {
-          if (a.plot !== b.plot) return a.plot.localeCompare(b.plot);
-          if (a.rep !== b.rep) return a.rep - b.rep;
-          return a.plantNo - b.plantNo;
-        });
-        const rows = sorted.map(r => [
-          r.plot,
+        const headers = ['試験区', '反復', '株番号', '茎長_cm', '葉数_枚', '茎数_本', 'SPAD値', '状態_備考', '記録日時'];
+        const rows = sortRecords(records).map(r => [
+          csvText(r.plot),
           r.rep,
           r.plantNo,
           r.stemLength ?? '',
           r.leafCount ?? '',
           r.tillerCount ?? '',
           r.spad ?? '',
-          `"${String(r.note || '').replace(/"/g, '""')}"`,
-          r.updatedAt
+          csvText(r.note),
+          csvText(r.updatedAt)
         ].join(','));
         return [headers.join(','), ...rows].join('\r\n');
       }
 
-      downloadCsvBtn.addEventListener('click', () => {
+      async function downloadCsv() {
         if (records.length === 0) {
           showToast('出力する記録データがありません', 'warn');
           return;
         }
         const csv = '\uFEFF' + generateCsvContent();
+        const fileName = `field_survey_${todayStr()}.csv`;
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+        // iOS のホーム画面アプリでは a[download] が効かないため共有シートを使う
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS && navigator.canShare && navigator.share) {
+          try {
+            const file = new File([blob], fileName, { type: 'text/csv' });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({ files: [file], title: fileName });
+              showToast('CSVを共有しました', 'success');
+              return;
+            }
+          } catch (e) {
+            if (e && e.name === 'AbortError') return;
+          }
+        }
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const dateStr = new Date().toISOString().slice(0, 10);
         a.href = url;
-        a.download = `field_survey_${dateStr}.csv`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 10000); // 即revokeするとSafari等でDLが失敗する
         showToast('CSVファイルをダウンロードしました', 'success');
-      });
+      }
 
-      // Modal Helpers
+      downloadCsvBtn.addEventListener('click', downloadCsv);
+
+      // ---------- Modal ----------
       function openModal(title, bodyHtml, footerHtml) {
         modalTitle.textContent = title;
         modalBody.innerHTML = bodyHtml;
@@ -910,6 +1161,9 @@
       modalCloseBtn.addEventListener('click', closeModal);
       modalBackdrop.addEventListener('click', (e) => {
         if (e.target === modalBackdrop) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
       });
 
       previewCsvBtn.addEventListener('click', () => {
@@ -940,7 +1194,7 @@
       clearAllBtn.addEventListener('click', () => {
         openModal(
           '全件クリアの確認',
-          '<p class="text-sm text-slate-600">現在記録されているすべての調査データを削除します。よろしいですか？</p>',
+          '<p class="text-sm text-slate-600">現在記録されているすべての調査データを削除します。よろしいですか？<br><span class="text-xs text-slate-400">実行直後であれば「元に戻す」で復元できます。</span></p>',
           `<button id="cancel-clear-btn" type="button" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold cursor-pointer">キャンセル</button>
            <button id="confirm-clear-btn" type="button" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">すべて削除する</button>`
         );
@@ -955,10 +1209,17 @@
         });
       });
 
-      // Other Controls
+      // ---------- Other Controls ----------
+      undoBtn.addEventListener('click', undo);
+
       toggleTtsBtn.addEventListener('click', () => {
         ttsEnabled = !ttsEnabled;
         ttsStatusLabel.textContent = ttsEnabled ? 'ON' : 'OFF';
+        if (!ttsEnabled) {
+          try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+          ttsToken++;
+          speakingUntil = 0;
+        }
         showToast(`音声復唱を ${ttsEnabled ? 'ON' : 'OFF'} にしました`, 'info');
       });
 
@@ -995,16 +1256,19 @@
         });
       });
 
+      function setInputMode(mode) {
+        inputMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => {
+          b.className = (b.dataset.mode === mode)
+            ? 'mode-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-700 text-white cursor-pointer'
+            : 'mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer';
+        });
+      }
+
       document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          inputMode = btn.dataset.mode;
-          document.querySelectorAll('.mode-btn').forEach(b => {
-            if (b === btn) {
-              b.className = 'mode-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-700 text-white cursor-pointer';
-            } else {
-              b.className = 'mode-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer';
-            }
-          });
+          setInputMode(btn.dataset.mode);
+          sweepStart = null;
           showToast(`入力モード: ${btn.textContent}`, 'info');
         });
       });
@@ -1018,8 +1282,13 @@
         showToast(`連続測定（自動次株）を ${autoAdvancePlant ? 'ON' : 'OFF'} にしました`, 'info');
       });
 
-      // Init
+      // ---------- Init ----------
+      try {
+        // iOS Safari 等は未使用サイトのlocalStorageを自動削除することがある → 永続化を要求
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      } catch (e) {}
       initSpeechRecognition();
+      restoreTarget();
       renderAll();
       if (window.lucide) {
         window.lucide.createIcons();
